@@ -5,6 +5,7 @@ struct AppProcess {
     let cpu: Double
     let mem: Double
     let rss: UInt64
+    let pid: Int32
 
     var rssFormatted: String {
         let bytes = rss * 1024
@@ -28,7 +29,7 @@ final class ProcessFetcher {
     func fetch() -> ProcessList {
         let task = Process()
         task.executableURL = URL(fileURLWithPath: "/bin/ps")
-        task.arguments = ["-A", "-o", "pcpu=", "-o", "pmem=", "-o", "rss=", "-o", "comm=", "-r"]
+        task.arguments = ["-A", "-o", "pcpu=", "-o", "pmem=", "-o", "rss=", "-o", "pid=", "-o", "comm=", "-r"]
 
         let pipe = Pipe()
         task.standardOutput = pipe
@@ -51,13 +52,14 @@ final class ProcessFetcher {
 
         for line in output.split(separator: "\n") {
             let parts = line.split(separator: " ", omittingEmptySubsequences: true)
-            guard parts.count >= 4,
+            guard parts.count >= 5,
                   let cpu = Double(parts[0]),
                   let mem = Double(parts[1]),
-                  let rss = UInt64(parts[2]) else { continue }
-            let rawName = String(parts[3...].joined(separator: " "))
+                  let rss = UInt64(parts[2]),
+                  let pid = Int32(parts[3]) else { continue }
+            let rawName = String(parts[4...].joined(separator: " "))
             let name = URL(fileURLWithPath: rawName).lastPathComponent
-            processes.append(AppProcess(name: name, cpu: cpu, mem: mem, rss: rss))
+            processes.append(AppProcess(name: name, cpu: cpu, mem: mem, rss: rss, pid: pid))
         }
 
         let topCPU = Array(processes.prefix(3))

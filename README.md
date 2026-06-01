@@ -1,53 +1,89 @@
-# SysMonitor
+# 🖥️ CPU Status Bar
 
-A lightweight macOS menu bar app that displays real-time CPU and memory usage. Click to see top resource-consuming processes.
+> 一款专为 macOS 设计的轻量级状态栏系统监视器，实时掌握性能与功耗。
 
-## Features
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-macOS%2013%2B-blue?logo=apple" alt="Platform">
+  <img src="https://img.shields.io/badge/language-Swift%205.9-orange?logo=swift" alt="Language">
+  <img src="https://img.shields.io/badge/license-MIT-green" alt="License">
+</p>
 
-- **Live CPU & Memory** — 2-line display in the menu bar, refreshed every 2 seconds
-- **Top Processes** — Click the status bar item to see top 3 CPU and top 3 memory consumers
-- **No Dock icon** — Runs as a background agent (`LSUIElement`)
-- **Low overhead** — Uses `host_statistics` / `vm_statistics64` kernel APIs directly
+---
 
-## Requirements
+## ✨ 功能特点
 
-- macOS 13+
-- Xcode Command Line Tools (or Swift 5.9+ toolchain)
+- ⚡ **轻量常驻** — 无 Dock 栏图标，纯后台常驻状态栏，极低资源占用。
+- 📊 **实时监测** — 每 2 秒动态刷新 CPU 和内存使用百分比。
+- 🔍 **智能排查** — 点击下拉菜单，一目了然当前最高占用的应用列表。
+- 👔 **优雅对齐** — 智能截断过长应用名，完美支持系统暗黑/明亮模式切换。
+- ❌ **快捷强杀** — 支持在菜单中右键 / 快捷关闭高占用 App，并带有防误触弹窗确认。
+- 🔒 **单例保证** — 防止应用多开占满状态栏。
 
-## Build
+---
+
+## 📋 开发环境
+
+| 依赖 | 说明 |
+|------|------|
+| **macOS** | 13.0 (Ventura) 及以上 |
+| **Swift** | 5.9+ |
+| **Xcode Command Line Tools** | `xcode-select --install` |
+
+---
+
+## 🚀 快速开始
+
+### 1. 克隆项目
 
 ```bash
-# Debug build
-swift build
-
-# Release build → .build/SysMonitor.app
-make build
-
-# Release build → SysMonitor.app (in project root)
-make dist
+git clone https://github.com/your-username/cpu-status-bar.git
+cd cpu-status-bar
 ```
 
-## Run
+### 2. 一键编译 & 运行
 
 ```bash
+# 编译 Release 版本并启动
 make run
 ```
 
-Or drag `SysMonitor.app` (after `make dist`) into your Applications folder.
+### 3. 常用命令
 
-## Project Structure
+```bash
+# 仅编译（Release，产物位于 .build/CPU Status Bar.app）
+make build
+
+# 编译并打包到项目根目录 CPU Status Bar.app
+make dist
+
+# 清理编译产物
+make clean
+```
+
+编译完成后，也可以直接将 `CPU Status Bar.app` 拖入 `/Applications` 文件夹，设为登录项即可开机自启。
+
+---
+
+## 🏗️ 项目结构
 
 ```
 Sources/cpu-status-bar/
-├── main.swift              # App entry point
-├── AppDelegate.swift       # Status bar, menu, timer
-├── MonitorService.swift    # CPU & memory sampling via host_statistics
-└── ProcessFetcher.swift    # Process list via ps, top-N ranking
+├── main.swift                  # 应用入口
+├── AppDelegate.swift           # 状态栏控制器、菜单、刷新定时器
+├── MonitorService.swift        # CPU / 内存采样（host_statistics / vm_statistics64）
+├── ProcessFetcher.swift        # 进程列表获取与 Top-N 排序
+└── ProcessMenuItemView.swift   # 自定义菜单项视图（应用名截断、强制退出按钮）
 
 Resources/
-└── Info.plist              # LSUIElement, bundle metadata
+└── Info.plist                  # LSUIElement = 1，无 Dock 栏图标
 ```
 
-## License
+---
 
-MIT
+## 📄 开源协议
+
+本项目基于 **MIT License** 开源，详见 [LICENSE](LICENSE) 文件。
+
+---
+
+<p align="center">Made with ❤️ for the macOS community</p>

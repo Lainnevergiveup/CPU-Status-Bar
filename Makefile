@@ -1,7 +1,8 @@
 .PHONY: build run clean dist
 
 SPM_TARGET  = cpu-status-bar
-APP_NAME    = SysMonitor
+APP_NAME    = CPU Status Bar
+BIN_NAME    = CPUStatusBar
 BUILD_DIR   = .build
 SPM_BIN     = $(BUILD_DIR)/release/$(SPM_TARGET)
 APP_BUNDLE  = $(BUILD_DIR)/$(APP_NAME).app
@@ -11,8 +12,9 @@ build:
 	swift build -c release
 	@mkdir -p "$(APP_BUNDLE)/Contents/MacOS"
 	@mkdir -p "$(APP_BUNDLE)/Contents/Resources"
-	@cp "$(SPM_BIN)" "$(APP_BUNDLE)/Contents/MacOS/$(APP_NAME)"
+	@cp "$(SPM_BIN)" "$(APP_BUNDLE)/Contents/MacOS/$(BIN_NAME)"
 	@cp Resources/Info.plist "$(APP_BUNDLE)/Contents/"
+	@cp Resources/AppIcon.icns "$(APP_BUNDLE)/Contents/Resources/"
 	@echo "Built: $(APP_BUNDLE)"
 
 run: build
@@ -24,4 +26,4 @@ dist: build
 	@echo "Packaged: $(DIST_APP)"
 
 clean:
-	rm -rf $(BUILD_DIR) $(DIST_APP)
+	rm -rf $(BUILD_DIR) "$(DIST_APP)"

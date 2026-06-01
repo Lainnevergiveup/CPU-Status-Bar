@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>SysMonitor</string>
+    <string>CPUStatusBar</string>
     <key>CFBundleIdentifier</key>
-    <string>com.lain.sysmonitor</string>
+    <string>com.lain.cpu-status-bar</string>
     <key>CFBundleName</key>
-    <string>SysMonitor</string>
+    <string>CPU Status Bar</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
@@ -16,5 +16,7 @@
     <true/>
     <key>NSHighResolutionCapable</key>
     <true/>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
 </dict>
 </plist>
