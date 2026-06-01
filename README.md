@@ -36,7 +36,7 @@
 ### 1. 克隆项目
 
 ```bash
-git clone https://github.com/your-username/cpu-status-bar.git
+git clone https://github.com/Lainnevergiveup/CPU-Status-Bar.git
 cd cpu-status-bar
 ```
 
