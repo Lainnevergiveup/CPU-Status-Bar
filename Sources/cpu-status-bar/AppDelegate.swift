@@ -1,11 +1,15 @@
 import AppKit
 import Darwin
+import ServiceManagement
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem!
+    private var autoLaunchItem: NSMenuItem!
+    private var uptimeItem: NSMenuItem!
     private var timer: Timer?
     private let monitor = MonitorService()
     private let fetcher = ProcessFetcher()
+    private let selfMonitor = SelfMonitor()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         guard !isAlreadyRunning() else {
@@ -20,6 +24,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.delegate = self
         menu.addItem(NSMenuItem(title: "退出应用", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         menu.addItem(NSMenuItem.separator())
+
+        autoLaunchItem = NSMenuItem(title: "", action: #selector(toggleAutoLaunch), keyEquivalent: "")
+        autoLaunchItem.target = self
+        menu.addItem(autoLaunchItem)
+        menu.addItem(NSMenuItem.separator())
+
+        uptimeItem = NSMenuItem(title: "", action: nil, keyEquivalent: "")
+        uptimeItem.isEnabled = false
+        menu.addItem(uptimeItem)
+        menu.addItem(NSMenuItem.separator())
+
         statusItem.menu = menu
 
         timer = Timer.scheduledTimer(withTimeInterval: 2.0, repeats: true) { [weak self] _ in
@@ -44,14 +59,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - NSMenuDelegate
 
     func menuWillOpen(_ menu: NSMenu) {
+        refreshAutoLaunchTitle()
+        refreshUptimeTitle()
         clearDynamicItems(from: menu)
         addLoadingItem(to: menu)
 
         DispatchQueue.global(qos: .userInitiated).async { [weak self] in
             guard let self else { return }
             let processes = self.fetcher.fetch()
+            let selfStats = self.selfMonitor.sample()
             DispatchQueue.main.async {
-                self.populateMenu(menu, with: processes)
+                self.populateMenu(menu, with: processes, selfStats: selfStats)
             }
         }
     }
@@ -59,8 +77,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     // MARK: - Menu building
 
     private func clearDynamicItems(from menu: NSMenu) {
-        while menu.items.count > 2 {
-            menu.removeItem(at: 2)
+        while menu.items.count > 6 {
+            menu.removeItem(at: 6)
         }
     }
 
@@ -70,7 +88,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
         menu.addItem(item)
     }
 
-    private func populateMenu(_ menu: NSMenu, with processes: ProcessList) {
+    private func populateMenu(_ menu: NSMenu, with processes: ProcessList, selfStats: SelfStats) {
         clearDynamicItems(from: menu)
 
         // ── Top CPU ──
@@ -114,6 +132,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
             ]
         )
         menu.addItem(hint)
+
+        // ── Self monitor ──
+        menu.addItem(NSMenuItem.separator())
+        let selfInfo = String(format: "本应用占用  CPU %.1f%%  |  内存 %.1f MB", selfStats.cpu, selfStats.memoryMB)
+        let selfItem = NSMenuItem(title: selfInfo, action: nil, keyEquivalent: "")
+        selfItem.isEnabled = false
+        selfItem.attributedTitle = NSAttributedString(
+            string: selfInfo,
+            attributes: [
+                .font: NSFont.systemFont(ofSize: NSFont.smallSystemFontSize),
+                .foregroundColor: NSColor.secondaryLabelColor
+            ]
+        )
+        menu.addItem(selfItem)
     }
 
     private func addProcessItem(to menu: NSMenu, process: AppProcess, showCPU: Bool, customValue: String? = nil) {
@@ -159,6 +191,50 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
                 }
             }
         }
+    }
+
+    // MARK: - Auto launch
+
+    private func refreshAutoLaunchTitle() {
+        let enabled = SMAppService.mainApp.status == .enabled
+        autoLaunchItem.title = enabled ? "✓ 开机自启" : "开机自启"
+    }
+
+    @objc private func toggleAutoLaunch() {
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
+            }
+            refreshAutoLaunchTitle()
+        } catch {
+            let alert = NSAlert()
+            alert.messageText = "开机自启设置失败"
+            alert.informativeText = error.localizedDescription
+            alert.addButton(withTitle: "确定")
+            alert.alertStyle = .warning
+            alert.runModal()
+        }
+    }
+
+    // MARK: - Uptime
+
+    private func refreshUptimeTitle() {
+        let uptime = Int(ProcessInfo.processInfo.systemUptime)
+        let days = uptime / 86400
+        let hours = (uptime % 86400) / 3600
+        let minutes = (uptime % 3600) / 60
+
+        let text: String
+        if days > 0 {
+            text = String(format: "已开机 %d 天 %d 小时 %d 分钟", days, hours, minutes)
+        } else if hours > 0 {
+            text = String(format: "已开机 %d 小时 %d 分钟", hours, minutes)
+        } else {
+            text = String(format: "已开机 %d 分钟", minutes)
+        }
+        uptimeItem.title = text
     }
 
     // MARK: - Status bar
